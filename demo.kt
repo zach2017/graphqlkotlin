@@ -13,6 +13,45 @@ import org.junit.jupiter.api.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.graphql.test.tester.HttpGraphQlTester;
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+public class GraphQLSubscriptionTest {
+
+    @Autowired
+    private HttpGraphQlTester graphQlTester;
+
+    @Test
+    public void testSubscription() {
+        // Create a subscription query
+        String query = "subscription { messageReceived { message } }";
+
+        // Execute the subscription
+        graphQlTester.query(query)
+            .executeAndVerify()
+            .verifyComplete();
+
+        // Simulate sending a message
+        sendMessage("Hello, World!");
+
+        // Verify the subscription response
+        graphQlTester.query(query)
+            .executeAndVerify()
+            .matchesNextResponse()
+            .jsonPath("$.data.messageReceived.message").isEqualTo("Hello, World!");
+    }
+
+    // Helper method to simulate sending a message
+    private void sendMessage(String message) {
+        // Code to send the message through the GraphQL subscription
+        // ...
+    }
+}
+
 class GraphQLSubscriptionTest {
 
     @ExperimentalCoroutinesApi

@@ -1,0 +1,74 @@
+Here's an example of a unit test for a Spring Boot Reactor Flux subscriber using Kotlin:
+
+```kotlin
+import org.junit.jupiter.api.Test
+import org.mockito.Mockito.`when`
+import org.mockito.Mockito.verify
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.mock.mockito.MockBean
+import reactor.core.publisher.Flux
+import reactor.test.StepVerifier
+
+@SpringBootTest
+class FluxSubscriberTest {
+
+    @Autowired
+    private lateinit var fluxSubscriber: FluxSubscriber
+
+    @MockBean
+    private lateinit var someService: SomeService
+
+    @Test
+    fun `test flux subscriber`() {
+        // Given
+        val fluxData = Flux.just("data1", "data2", "data3")
+        `when`(someService.getData()).thenReturn(fluxData)
+
+        // When
+        val resultFlux = fluxSubscriber.subscribeToFlux()
+
+        // Then
+        StepVerifier.create(resultFlux)
+            .expectNext("data1")
+            .expectNext("data2")
+            .expectNext("data3")
+            .verifyComplete()
+
+        verify(someService).getData()
+    }
+}
+
+class FluxSubscriber(private val someService: SomeService) {
+
+    fun subscribeToFlux(): Flux<String> {
+        return someService.getData()
+            .map { it.toUpperCase() }
+    }
+}
+
+interface SomeService {
+    fun getData(): Flux<String>
+}
+```
+
+In this example:
+
+1. We define a `FluxSubscriber` class that has a dependency on `SomeService`. The `subscribeToFlux()` method subscribes to the Flux returned by `someService.getData()` and transforms each emitted item to uppercase.
+
+2. In the unit test `FluxSubscriberTest`, we use the `@SpringBootTest` annotation to load the Spring application context for testing.
+
+3. We use `@MockBean` to create a mock instance of `SomeService` and inject it into the test context.
+
+4. In the `test flux subscriber` test method:
+   - We define the expected Flux data using `Flux.just()`.
+   - We use `when()` to stub the behavior of `someService.getData()` to return the expected Flux.
+   - We call the `subscribeToFlux()` method on the `fluxSubscriber` to subscribe to the Flux.
+   - We use `StepVerifier` to verify the emitted items from the resulting Flux. We expect the items to be emitted in the specified order and then the Flux should complete.
+   - Finally, we use `verify()` to ensure that `someService.getData()` was called during the test.
+
+5. The `SomeService` interface is defined as a dependency of `FluxSubscriber`, and its `getData()` method returns a Flux of strings.
+
+This unit test verifies that the `FluxSubscriber` correctly subscribes to the Flux provided by `SomeService`, transforms the emitted items to uppercase, and emits them in the expected order.
+
+Note: Make sure you have the necessary dependencies in your project, such as `spring-boot-starter-test` and `reactor-test`, to run this unit test.
